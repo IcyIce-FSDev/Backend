@@ -2,6 +2,7 @@ const express = require("express");
 const { request } = require("undici");
 const axios = require("axios");
 const router = express.Router();
+const pgPool = require("../libs/db");
 
 // middleware to get access token
 router.use(async (req, res, next) => {
@@ -46,7 +47,7 @@ router.use(async (req, res, next) => {
   }
 });
 
-// middleware if access token granted, creates user in database for website
+// middleware if access token granted, gets user info
 router.use(async (req, res, next) => {
   // Access the OAuth data from req.oauthData
   const oauthData = req.oauthData;
@@ -79,25 +80,59 @@ router.use(async (req, res, next) => {
   next();
 });
 
-// define the home page route
-https: router.post("/login", async (req, res) => {
+// Once user is fetched, will compile and upload into DB
+router.use(async (req, res, next) => {
+  // gets objects from req
   const { oauthData, user } = req;
+  // breaks down further
+  const { id, username, global_name, email, verified, discriminator } = user;
+  const { token_type, access_token, refresh_token } = oauthData;
+  const login = new Date();
 
-  console.log(oauthData);
-  console.log(user);
+  const sttm = `INSERT INTO users (id, username, global, email, verified, discriminator, type, token, refresh, login)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`;
 
-  res.send("Request seen to create user from discord login");
+  const values = [
+    id,
+    username,
+    global_name,
+    email,
+    verified,
+    discriminator,
+    token_type,
+    access_token,
+    refresh_token,
+    login,
+  ];
 
-  // // Access the session ID from req.sessionID
-  // const sessionID = req.sessionID;
+  try {
+    await pgPool.query(sttm, values);
 
-  // try {
-  //   // Set the session ID as a cookie with the key 'connect.sid'
-  //   res.cookie("connect.sid", sessionID);
-  //   console.log("Cookie set and being sent");
-  // } catch (error) {
-  //   console.log(error);
-  // }
+    next();
+  } catch (error) {
+    console.log(error);
+    res.send("Error getting token");
+  }
+});
+
+// define the home page route
+router.post("/", async (req, res) => {
+  req.session.user = {
+    username: req.user.username,
+  };
+
+  // Access the session ID from req.sessionID
+  const sessionID = req.sessionID;
+
+  try {
+    // Set the session ID as a cookie with the key 'connect.sid'
+    res.cookie("connect.sid", sessionID, { httpOnly: false });
+    console.log("Cookie set and being sent");
+  } catch (error) {
+    console.log(error);
+  }
+
+  res.send({ success: true, username: req.user.username });
 });
 
 module.exports = router;

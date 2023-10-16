@@ -1,11 +1,13 @@
 // Module requirements
 const express = require("express");
 const session = require("express-session");
-const pg = require("pg");
 const PgSession = require("connect-pg-simple")(session);
 const bodyParser = require("body-parser");
 const cors = require("cors");
 require("dotenv").config();
+
+// Custom Modulues
+const pgPool = require("./libs/db");
 
 // Routes imports
 const discord = require("./routes/discord");
@@ -13,16 +15,6 @@ const discord = require("./routes/discord");
 // Start of program
 const app = express();
 const port = process.env.PORT;
-
-// Initialize DB pool
-const pgPool = new pg.Pool({
-  // Add your PostgreSQL database configuration here
-  user: "postgres",
-  host: "localhost",
-  database: "gamersgrouping",
-  password: "ckz28myk",
-  port: 5432, // Change the port as needed
-});
 
 // Middleware setups
 app.set("trust proxy", 1); // trust first proxy
@@ -44,7 +36,7 @@ app.use(
   })
 );
 
-app.use("/discord", discord);
+app.use("/discord/login", discord);
 
 app.listen(port, () => {
   console.log(`Dev app listening on port ${port}`);
