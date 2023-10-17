@@ -1,8 +1,10 @@
 const express = require("express");
 const { request } = require("undici");
 const axios = require("axios");
+
+const pgPool = require("../../libs/db");
+
 const router = express.Router();
-const pgPool = require("../libs/db");
 
 // middleware to get access token
 router.use(async (req, res, next) => {
@@ -89,8 +91,21 @@ router.use(async (req, res, next) => {
   const { token_type, access_token, refresh_token } = oauthData;
   const login = new Date();
 
-  const sttm = `INSERT INTO users (id, username, global, email, verified, discriminator, type, token, refresh, login)
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);`;
+  const sttm = `
+  INSERT INTO users (id, username, global, email, verified, discriminator, type, token, refresh, login)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  ON CONFLICT (id) DO UPDATE
+  SET 
+    username = EXCLUDED.username,
+    global = EXCLUDED.global,
+    email = EXCLUDED.email,
+    verified = EXCLUDED.verified,
+    discriminator = EXCLUDED.discriminator,
+    type = EXCLUDED.type,
+    token = EXCLUDED.token,
+    refresh = EXCLUDED.refresh,
+    login = EXCLUDED.login;  
+  `;
 
   const values = [
     id,
@@ -111,7 +126,6 @@ router.use(async (req, res, next) => {
     next();
   } catch (error) {
     console.log(error);
-    res.send("Error getting token");
   }
 });
 
@@ -119,6 +133,7 @@ router.use(async (req, res, next) => {
 router.post("/", async (req, res) => {
   req.session.user = {
     username: req.user.username,
+    isAuth: true,
   };
 
   // Access the session ID from req.sessionID
@@ -127,7 +142,6 @@ router.post("/", async (req, res) => {
   try {
     // Set the session ID as a cookie with the key 'connect.sid'
     res.cookie("connect.sid", sessionID, { httpOnly: false });
-    console.log("Cookie set and being sent");
   } catch (error) {
     console.log(error);
   }

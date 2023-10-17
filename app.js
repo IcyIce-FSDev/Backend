@@ -8,9 +8,7 @@ require("dotenv").config();
 
 // Custom Modulues
 const pgPool = require("./libs/db");
-
-// Routes imports
-const discord = require("./routes/discord");
+const routeHandler = require("./router/routeHandler");
 
 // Start of program
 const app = express();
@@ -36,7 +34,7 @@ app.use(
   })
 );
 
-app.use("/discord/login", discord);
+app.use("/", routeHandler);
 
 app.listen(port, () => {
   console.log(`Dev app listening on port ${port}`);
