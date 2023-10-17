@@ -1,8 +1,4 @@
 const express = require("express");
-const { request } = require("undici");
-const axios = require("axios");
-
-const pgPool = require("../../libs/db");
 
 const router = express.Router();
 
