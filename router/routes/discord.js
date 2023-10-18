@@ -132,7 +132,8 @@ router.use(async (req, res, next) => {
 // define the home page route
 router.post("/", async (req, res) => {
   req.session.user = {
-    username: req.user.username,
+    id: req.user.id,
+    username: req.user.global_name,
     isAuth: true,
   };
 
