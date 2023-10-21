@@ -4,7 +4,7 @@ const express = require("express");
 const discordRouter = require("./routes/discord.js");
 const autoAuth = require("./routes/autoAuth.js");
 const logout = require("./routes/logout.js");
-const game = require("./routes/game.js");
+const games = require("./routes/games.js");
 
 const routeHandler = express.Router();
 
@@ -14,6 +14,6 @@ routeHandler.use("/api/autoauth", autoAuth);
 
 routeHandler.use("/api/logout", logout);
 
-routeHandler.use("/api/game", game);
+routeHandler.use("/api/games", games);
 
 module.exports = routeHandler;
